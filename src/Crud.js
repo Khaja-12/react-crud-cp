@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import MaterialTable from '@material-table/core'
 import Popup from './Popup';
 
 function Crud() {
    
-  const [data, setData] = useState([])
+  // const [data, setData] = useState([])
+  // console.log(setData) 
 
   const url = 'https://jsonplaceholder.typicode.com/users'
   const columns = [
@@ -14,18 +15,18 @@ function Crud() {
     { title: "Phone", field: "phone" }
   ];
 
-  useEffect(() => {
-    getData()
-  }, [])
+  // useEffect(() => {
+   
+  // }, [])
 
   // getApi
-  const getData = async () => {
-    await fetch(url).then((res) => {
-      res.json().then((result) => {
-        setData(result)
-      })
-    })
-  };
+  // const getData = async () => {
+  //   await fetch(url).then((res) => {
+  //     res.json().then((result) => {
+  //       setData(result)
+  //     })
+  //   })
+  // };
 
   
 
@@ -51,7 +52,10 @@ function Crud() {
           options={{  
             showFirstLastPageButtons: false,
             paginationType: "stepped",
-            headerStyle:{backgroundColor:"black",color:"white"}
+            // headerStyle:{backgroundColor:"black",color:"white"}
+            filtering:true,
+            debounceInterval:700,
+            padding:"dense"
           }}
           editable={{
             onRowUpdate:(newData,oldData)=> new Promise((resolve,reject)=>{
@@ -64,7 +68,7 @@ function Crud() {
               }).then(res=>res.json())
               .then(result=>{
                 console.log(result)
-              getData()
+              // getData()
                resolve()
            })
            }),
@@ -76,7 +80,7 @@ function Crud() {
              }
             }).then(res=>res.json())
             .then(result=>{
-              getData()
+              // getData()
              resolve()
          })
          })
@@ -100,7 +104,37 @@ function Crud() {
             // }
           ]}
           title={""} 
-          columns={columns} data={data} />   
+          columns={columns} 
+          data={query =>
+            new Promise((resolve, reject) => {
+              // console.log(query)
+              let url = "https://jsonplaceholder.typicode.com/users?"
+              if(query.search){
+                url+=`q=${query.search}`
+              }
+              if(query.orderBy){
+                url+=`&_sort=${query.orderBy.field}&_order=${query.orderDirection}`
+              }
+              if(query.filters.length){
+              const filter = query.filters.map((filter)=>{
+                   return `&${filter.column.field}${filter.operator}${filter.value}`
+                })
+                url+=filter.join('')
+              }
+              url+=`&_page=${query.page+1}`
+              url+=`&_limit=${query.pageSize}`
+              // prepare your data and then call resolve like this:
+              fetch(url).then(res=>res.json()).then(data=>{
+                resolve({
+                  data: data,// your data array
+                  page: query.page,// current page number     
+                  totalCount:499 // total row number
+              });
+              })
+            
+            })
+          
+        }/>   
       </div>
     </>
   )
